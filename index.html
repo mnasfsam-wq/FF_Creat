@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D09_L7 | متجر الحسابات</title>
+    <style>
+        :root { --primary: #ff4500; --bg: #121212; --card: #1e1e1e; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); color: white; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: auto; }
+        .card { background: var(--card); padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #333; }
+        input, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: none; box-sizing: border-box; }
+        input { background: #333; color: white; }
+        button { background: var(--primary); color: white; font-weight: bold; cursor: pointer; }
+        button.insta { background: #e1306c; }
+        .admin-section { border: 2px solid gold; display: none; }
+        .ad-box { border-right: 5px solid var(--primary); padding-right: 15px; background: #252525; }
+        .ad-img { width: 100%; border-radius: 8px; margin-top: 10px; }
+        .nav { display: flex; justify-content: space-between; align-items: center; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="login-page" class="card">
+        <h2>تسجيل الدخول</h2>
+        <input type="text" id="login-user" placeholder="اسم المستخدم">
+        <input type="password" id="login-pass" placeholder="كلمة المرور">
+        <button onclick="login()">دخول</button>
+    </div>
+
+    <div id="main-page" class="hidden">
+        <div class="nav">
+            <h3>أهلاً، <span id="user-display"></span></h3>
+            <p>نقاطك: <span id="points-display" style="color: gold;"></span></p>
+        </div>
+        <button onclick="logout()">تسجيل خروج</button>
+        <button class="insta" onclick="window.location.href='https://instagram.com/D09_L7'">شراء نقاط عبر انستقرام D09_L7</button>
+
+        <hr>
+
+        <div id="ads-container">
+            <h4>أحدث الإعلانات</h4>
+            <div id="ads-list"></div>
+        </div>
+
+        <hr>
+
+        <h4>الحسابات المتوفرة للبيع</h4>
+        <div id="store-list"></div>
+    </div>
+
+    <div id="admin-panel" class="card admin-section">
+        <h3>لوحة تحكم الإدارة (D09_L7)</h3>
+        
+        <p><strong>1. إضافة حساب للبيع:</strong></p>
+        <input type="text" id="new-acc-user" placeholder="يوزر الحساب">
+        <input type="text" id="new-acc-pass" placeholder="باسورد الحساب">
+        <input type="number" id="new-acc-price" placeholder="السعر بالنقاط">
+        <button onclick="adminAddAccount()">نشر الحساب في المتجر</button>
+
+        <p><strong>2. نشر إعلان جديد:</strong></p>
+        <input type="text" id="ad-title" placeholder="عنوان الإعلان">
+        <input type="text" id="ad-desc" placeholder="وصف الإعلان">
+        <input type="text" id="ad-img-url" placeholder="رابط صورة الإعلان">
+        <button onclick="adminPostAd()">نشر الإعلان</button>
+    </div>
+</div>
+
+<script>
+    // بيانات النظام (يتم حفظها في المتصفح)
+    let accounts = JSON.parse(localStorage.getItem('store_accs')) || [];
+    let ads = JSON.parse(localStorage.getItem('store_ads')) || [];
+    let currentUser = null;
+
+    function login() {
+        const u = document.getElementById('login-user').value;
+        const p = document.getElementById('login-pass').value;
+
+        if (u === "d09_L7" && p === "d09_L7") {
+            currentUser = { name: "المدير", points: "∞", role: "admin" };
+        } else {
+            currentUser = { name: u, points: 50, role: "user" }; // 50 نقطة هدية للمستخدم الجديد
+        }
+        
+        showMainPage();
+    }
+
+    function showMainPage() {
+        document.getElementById('login-page').classList.add('hidden');
+        document.getElementById('main-page').classList.remove('hidden');
+        document.getElementById('user-display').innerText = currentUser.name;
+        document.getElementById('points-display').innerText = currentUser.points;
+
+        if (currentUser.role === "admin") {
+            document.getElementById('admin-panel').style.display = 'block';
+        }
+        renderStore();
+        renderAds();
+    }
+
+    // وظائف الأدمن
+    function adminAddAccount() {
+        const user = document.getElementById('new-acc-user').value;
+        const pass = document.getElementById('new-acc-pass').value;
+        const price = document.getElementById('new-acc-price').value;
+        
+        accounts.push({ user, pass, price: parseInt(price) });
+        localStorage.setItem('store_accs', JSON.stringify(accounts));
+        alert("تمت إضافة الحساب!");
+        renderStore();
+    }
+
+    function adminPostAd() {
+        const title = document.getElementById('ad-title').value;
+        const desc = document.getElementById('ad-desc').value;
+        const img = document.getElementById('ad-img-url').value;
+
+        ads.push({ title, desc, img });
+        localStorage.setItem('store_ads', JSON.stringify(ads));
+        alert("تم نشر الإعلان!");
+        renderAds();
+    }
+
+    // عرض المتجر
+    function renderStore() {
+        const list = document.getElementById('store-list');
+        list.innerHTML = "";
+        accounts.forEach((acc, index) => {
+            list.innerHTML += `
+                <div class="card">
+                    <p>حساب ضيف جاهز - السعر: ${acc.price} نقطة</p>
+                    <button onclick="buyAccount(${index}, ${acc.price})">شراء الحساب</button>
+                </div>
+            `;
+        });
+    }
+
+    function renderAds() {
+        const list = document.getElementById('ads-list');
+        list.innerHTML = "";
+        ads.forEach(ad => {
+            list.innerHTML += `
+                <div class="ad-box card">
+                    <h5>${ad.title}</h5>
+                    <p>${ad.desc}</p>
+                    ${ad.img ? `<img src="${ad.img}" class="ad-img">` : ''}
+                </div>
+            `;
+        });
+    }
+
+    function buyAccount(index, price) {
+        if (currentUser.role === "admin" || currentUser.points >= price) {
+            const acc = accounts[index];
+            alert(`تم الشراء بنجاح!\nاليوزر: ${acc.user}\nالباسورد: ${acc.pass}`);
+            
+            if (currentUser.role !== "admin") {
+                currentUser.points -= price;
+                document.getElementById('points-display').innerText = currentUser.points;
+            }
+            // إزالة الحساب من المتجر بعد الشراء
+            accounts.splice(index, 1);
+            localStorage.setItem('store_accs', JSON.stringify(accounts));
+            renderStore();
+        } else {
+            alert("نقاطك لا تكفي! تواصل مع الأدمن D09_L7 لشحن النقاط.");
+        }
+    }
+
+    function logout() { location.reload(); }
+</script>
+
+</body>
+</html>
